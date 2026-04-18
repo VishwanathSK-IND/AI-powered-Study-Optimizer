@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../services/firebase";
+import { auth } from "../Services/firebase";
 import {
   addSubject, getSubjects, updateSubject, deleteSubject,
   logSession, getSessions, deleteSession,

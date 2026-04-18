@@ -1,5 +1,4 @@
-// src/pages/Insights.jsx
-// Chat history persists across navigation using localStorage
+
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useStudy } from "../context/StudyContext";
@@ -42,7 +41,6 @@ export default function Insights() {
   const [generating, setGenerating]   = useState(false);
   const [aiError, setAiError]         = useState("");
 
-  // ── Chat state — loaded from localStorage on mount ────────
   const [messages, setMessages]       = useState([]);
   const [input, setInput]             = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -50,10 +48,9 @@ export default function Insights() {
 
   const chatBottomRef = useRef(null);
 
-  // localStorage key is per user so different users don't share history
   const chatKey = currentUser ? `studyos_${currentUser.uid}_chat` : null;
 
-  // Load chat history from localStorage when component mounts
+
   useEffect(() => {
     if (!chatKey) return;
     try {
@@ -62,29 +59,27 @@ export default function Insights() {
         setMessages(JSON.parse(saved));
       }
     } catch {
-      // corrupted data — start fresh
+     
       localStorage.removeItem(chatKey);
     }
   }, [chatKey]);
 
-  // Save chat history to localStorage whenever messages change
   useEffect(() => {
     if (!chatKey || messages.length === 0) return;
     try {
-      // Keep only last 40 messages so localStorage doesn't fill up
+      
       const toSave = messages.slice(-40);
       localStorage.setItem(chatKey, JSON.stringify(toSave));
     } catch {
-      // localStorage full — silently skip
+      
     }
   }, [messages, chatKey]);
 
-  // Auto scroll to bottom when new message arrives
+  
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatLoading]);
 
-  // ── Build study data summary ──────────────────────────────
   const buildSummary = useCallback(() => {
     const totalMins = sessions.reduce((s, sess) => s + (sess.duration || 0), 0);
 
@@ -113,7 +108,6 @@ export default function Insights() {
 You help students understand their study patterns and give specific, actionable advice.
 Keep responses concise and practical. Use numbered points when listing multiple items.`;
 
-  // ── Generate analysis ──────────────────────────────────────
   const generateInsights = async () => {
     setGenerating(true);
     setAiError("");
@@ -139,7 +133,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
     }
   };
 
-  // ── Chat ──────────────────────────────────────────────────
+  
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || chatLoading) return;
@@ -158,7 +152,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
           role: "system",
           content: `${systemPrompt}\n\nStudent's current study data:\n${buildSummary()}`,
         },
-        // Send full history so AI remembers previous messages
+        
         ...updatedMsgs,
       ]);
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
@@ -168,7 +162,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
           ? "Invalid API key — check .env file."
           : `Failed: ${err.message}`
       );
-      // Revert on error so user can retry
+      
       setMessages(messages);
       setInput(text);
     } finally {
@@ -198,7 +192,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
         </div>
       </div>
 
-      {/* ── Analysis panel ─────────────────────────────────── */}
+      
       <div className="card insights-card">
         <div className="insights-header">
           <div>
@@ -251,7 +245,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
         )}
       </div>
 
-      {/* ── Chatbot ────────────────────────────────────────── */}
+      
       <div className="card chat-card">
         <div className="card-header-row">
           <div>
@@ -293,7 +287,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
             </div>
           )}
 
-          {/* Invisible div to scroll to */}
+        
           <div ref={chatBottomRef} />
         </div>
 
