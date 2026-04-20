@@ -4,8 +4,16 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useStudy } from "../context/StudyContext";
 import { useAuth } from "../context/AuthContext";
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const response = await fetch("/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ messages }),
+});
+
+const data = await response.json();
+
+// const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+// const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const callGroq = async (messages) => {
   if (!GROQ_API_KEY) throw new Error("API key not found. Set VITE_GROQ_API_KEY in your .env file.");
