@@ -1,22 +1,17 @@
-
+// src/pages/Insights.jsx
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useStudy } from "../context/StudyContext";
 import { useAuth } from "../context/AuthContext";
 
-const response = await fetch("/api/chat", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ messages }),
-});
-
-const data = await response.json();
-
-// const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-// const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+// ✅ These must NOT be commented out
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const callGroq = async (messages) => {
-  if (!GROQ_API_KEY) throw new Error("API key not found. Set VITE_GROQ_API_KEY in your .env file.");
+  if (!GROQ_API_KEY) {
+    throw new Error("API key not found. Add VITE_GROQ_API_KEY to your Vercel environment variables.");
+  }
 
   const response = await fetch(GROQ_URL, {
     method: "POST",
@@ -55,35 +50,28 @@ export default function Insights() {
   const [chatError, setChatError]     = useState("");
 
   const chatBottomRef = useRef(null);
-
   const chatKey = currentUser ? `studyos_${currentUser.uid}_chat` : null;
 
-
+  // Load chat history from localStorage on mount
   useEffect(() => {
     if (!chatKey) return;
     try {
       const saved = localStorage.getItem(chatKey);
-      if (saved) {
-        setMessages(JSON.parse(saved));
-      }
+      if (saved) setMessages(JSON.parse(saved));
     } catch {
-     
       localStorage.removeItem(chatKey);
     }
   }, [chatKey]);
 
+  // Save chat history to localStorage on every change
   useEffect(() => {
     if (!chatKey || messages.length === 0) return;
     try {
-      
-      const toSave = messages.slice(-40);
-      localStorage.setItem(chatKey, JSON.stringify(toSave));
-    } catch {
-      
-    }
+      localStorage.setItem(chatKey, JSON.stringify(messages.slice(-40)));
+    } catch {}
   }, [messages, chatKey]);
 
-  
+  // Auto scroll to latest message
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatLoading]);
@@ -116,6 +104,8 @@ export default function Insights() {
 You help students understand their study patterns and give specific, actionable advice.
 Keep responses concise and practical. Use numbered points when listing multiple items.`;
 
+  // ── Generate full analysis ─────────────────────────────────
+
   const generateInsights = async () => {
     setGenerating(true);
     setAiError("");
@@ -133,7 +123,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
     } catch (err) {
       setAiError(
         err.message.includes("401")
-          ? "Invalid API key. Regenerate at console.groq.com and update .env"
+          ? "Invalid API key. Check your Vercel environment variables."
           : err.message
       );
     } finally {
@@ -141,12 +131,13 @@ Keep responses concise and practical. Use numbered points when listing multiple 
     }
   };
 
-  
+  // ── Chat ──────────────────────────────────────────────────
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || chatLoading) return;
 
-    const userMsg = { role: "user", content: text };
+    const userMsg     = { role: "user", content: text };
     const updatedMsgs = [...messages, userMsg];
 
     setMessages(updatedMsgs);
@@ -160,17 +151,15 @@ Keep responses concise and practical. Use numbered points when listing multiple 
           role: "system",
           content: `${systemPrompt}\n\nStudent's current study data:\n${buildSummary()}`,
         },
-        
         ...updatedMsgs,
       ]);
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch (err) {
       setChatError(
         err.message.includes("401")
-          ? "Invalid API key — check .env file."
+          ? "Invalid API key — check Vercel environment variables."
           : `Failed: ${err.message}`
       );
-      
       setMessages(messages);
       setInput(text);
     } finally {
@@ -200,7 +189,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
         </div>
       </div>
 
-      
+      {/* Analysis panel */}
       <div className="card insights-card">
         <div className="insights-header">
           <div>
@@ -253,7 +242,7 @@ Keep responses concise and practical. Use numbered points when listing multiple 
         )}
       </div>
 
-      
+      {/* Chatbot */}
       <div className="card chat-card">
         <div className="card-header-row">
           <div>
@@ -263,7 +252,11 @@ Keep responses concise and practical. Use numbered points when listing multiple 
             </p>
           </div>
           {messages.length > 0 && (
-            <button className="btn-ghost" onClick={clearHistory} style={{ fontSize: "0.78rem", padding: "5px 12px" }}>
+            <button
+              className="btn-ghost"
+              onClick={clearHistory}
+              style={{ fontSize: "0.78rem", padding: "5px 12px" }}
+            >
               Clear history
             </button>
           )}
@@ -295,7 +288,6 @@ Keep responses concise and practical. Use numbered points when listing multiple 
             </div>
           )}
 
-        
           <div ref={chatBottomRef} />
         </div>
 
